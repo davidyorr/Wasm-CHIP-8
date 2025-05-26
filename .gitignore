@@ -1,2 +1,5 @@
 # Compiled WebAssembly files
 *.wasm
+
+# VS Code
+.vscode
