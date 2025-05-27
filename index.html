@@ -12,6 +12,10 @@
     </head>
     <body>
         <canvas id="canvas" width="640" height="320"></canvas>
+        <div class="load-rom-container">
+            <label for="rom-input">Load ROM:</label>
+            <input type="file" id="rom-input" name="rom-input" accept=".ch8" />
+        </div>
     </body>
     <style>
         body {
@@ -22,6 +26,11 @@
         }
         #canvas {
             border: 8px solid cornflowerblue;
+        }
+        .load-rom-container {
+            display: flex;
+            flex-direction: column;
+            color: #EEE;
         }
     </style>
 </html>
