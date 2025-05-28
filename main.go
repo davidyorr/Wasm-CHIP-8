@@ -33,6 +33,8 @@ func main() {
 	<-make(chan struct{})
 }
 
+var romLength int
+
 func setUpRomLoader() {
 	document := js.Global().Get("document")
 	fileInput := document.Call("getElementById", "rom-input")
@@ -47,9 +49,9 @@ func setUpRomLoader() {
 			clear(memory[programOffset:])
 
 			// copy the ROM data into the memory variable
-			numberOfBytesCopied := copy(memory[programOffset:], goDstSlice)
+			romLength = copy(memory[programOffset:], goDstSlice)
 
-			fmt.Printf("Loaded %d bytes of ROM into memory array\n", numberOfBytesCopied)
+			fmt.Printf("Loaded %d bytes of ROM into memory array\n", romLength)
 
 			return nil
 		}))
@@ -66,4 +68,26 @@ func draw() {
 	height := canvas.Get("height").Int()
 	ctx.Set("fillStyle", "#EEE")
 	ctx.Call("fillRect", 0, 0, width, height)
+}
+
+//go:wasmexport debugRom
+func debugRom() {
+	fmt.Printf("debugging ROM of length [%d]\n", romLength)
+	document := js.Global().Get("document")
+	debugModal := document.Call("getElementById", "debug-modal")
+	debugModalStyle := debugModal.Get("style")
+	debugModalStyle.Set("visibility", "visible")
+
+	i := programOffset
+	for i < programOffset + romLength {
+		byte1 := memory[i]
+		i++
+		byte2 := memory[i]
+		i++
+
+		p := document.Call("createElement", "p")
+		p.Call("append", fmt.Sprintf("%02x %02x", byte1, byte2))
+		debugModal.Call("append", p)
+	}
+
 }

@@ -7,17 +7,42 @@
             const go = new Go();
             WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
                 go.run(result.instance);
+
+                document.getElementById("debug-rom").addEventListener("click", () => {
+                    const debugModal = document.getElementById("debug-modal");
+                    if (debugModal.style.visibility === "visible") {
+                        debugModal.style.visibility = "hidden";
+                        return;
+                    }
+                    result.instance.exports.debugRom();
+                })
             });
         </script>
     </head>
     <body>
         <canvas id="canvas" width="640" height="320"></canvas>
-        <div class="load-rom-container">
-            <label for="rom-input">Load ROM:</label>
-            <input type="file" id="rom-input" name="rom-input" accept=".ch8" />
+        <div class="rom-container">
+            <!-- <label for="rom-input">Load ROM:</label> -->
         </div>
+        <div id="controls">
+            <label for="rom-input">Load ROM:</label>
+            <input id="rom-input" type="file" name="rom-input" accept=".ch8" />
+            <button id="debug-rom">Debug ROM</button>
+        </div>
+        <div id="debug-modal"></div>
     </body>
     <style>
+        html {
+        	box-sizing: border-box;
+        }
+        *,
+        *:before,
+        *:after {
+        	box-sizing: inherit;
+        }
+        :root {
+            --controls-height: 40px;
+        }
         body {
             min-height: 100vh;
             display: grid;
@@ -27,10 +52,39 @@
         #canvas {
             border: 8px solid cornflowerblue;
         }
-        .load-rom-container {
+        .rom-container {
             display: flex;
             flex-direction: column;
             color: #EEE;
+        }
+        #controls {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            height: var(--controls-height);
+            color: white;
+        }
+        #debug-modal {
+            position: absolute;
+            height: calc(100% - var(--controls-height));
+            width: 100%;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 24px;
+            font-family: monospace;
+            background-color: rgba(128, 0, 128, 0.9);
+            visibility: hidden;
+            overflow: scroll;
+
+            p {
+                margin: 0;
+            }
         }
     </style>
 </html>
