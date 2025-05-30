@@ -1,4 +1,4 @@
-.PHONY: dev
+.PHONY: dev clean
 
 dev: build
 	@echo "Running dev server"

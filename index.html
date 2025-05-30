@@ -5,29 +5,59 @@
         <script src="wasm_exec.js"></script>
         <script>
             const go = new Go();
-            WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
-                go.run(result.instance);
+            let goWasmModule = null;
+            WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((wasmModule) => {
+                go.run(wasmModule.instance);
+                goWasmModule = wasmModule;
 
                 document.getElementById("debug-rom").addEventListener("click", () => {
                     const debugModal = document.getElementById("debug-modal");
                     if (debugModal.style.visibility === "visible") {
                         debugModal.style.visibility = "hidden";
+                        debugModal.getElementsByTagName("table")?.[0].remove();
                         return;
                     }
-                    result.instance.exports.debugRom();
+                    wasmModule.instance.exports.debugRom();
                 })
+
+                document.getElementById("stop-rom").addEventListener("click", () => {
+                    stopAnimationLoop();
+                })
+
+                document.getElementById("canvas").getContext("2d").imageSmoothingEnabled = false;
             });
+
+            let animationFrameId = null;
+
+            function handleAnimationFrame() {
+                goWasmModule.instance.exports.processEmulatorStep();
+                animationFrameId = requestAnimationFrame(handleAnimationFrame);
+            }
+
+            function startAnimationLoop() {
+                cancelAnimationFrame(animationFrameId);
+                handleAnimationFrame();
+            }
+
+            function stopAnimationLoop() {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            function onRomLoaded() {
+                startAnimationLoop();
+            }
         </script>
     </head>
     <body>
         <canvas id="canvas" width="640" height="320"></canvas>
         <div class="rom-container">
-            <!-- <label for="rom-input">Load ROM:</label> -->
         </div>
         <div id="controls">
             <label for="rom-input">Load ROM:</label>
             <input id="rom-input" type="file" name="rom-input" accept=".ch8" />
             <button id="debug-rom">Debug ROM</button>
+            <button id="stop-rom">Stop ROM</button>
         </div>
         <div id="debug-modal"></div>
     </body>
@@ -78,12 +108,26 @@
             align-items: center;
             font-size: 24px;
             font-family: monospace;
-            background-color: rgba(128, 0, 128, 0.9);
+            background-color: rgba(36, 4, 36, 0.98);
+            color: #EEE;
             visibility: hidden;
             overflow: scroll;
 
-            p {
-                margin: 0;
+            table {
+                border-collapse: collapse;
+                text-align: center;
+
+                td, th {
+                    padding: 0 18px;
+                }
+
+                tr:nth-child(1) {
+                    border-bottom: 2px solid;
+                }
+
+                tr:nth-child(even) {
+                    filter: brightness(0.54);
+                }
             }
         }
     </style>
