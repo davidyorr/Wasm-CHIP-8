@@ -20,6 +20,41 @@
                     wasmModule.instance.exports.debugRom();
                 })
 
+                const keyToKeypadIndex = {
+                    "1": 0,
+                    "2": 1,
+                    "3": 2,
+                    "4": 3,
+                    "q": 4,
+                    "w": 5,
+                    "e": 6,
+                    "r": 7,
+                    "a": 8,
+                    "s": 9,
+                    "d": 10,
+                    "f": 11,
+                    "z": 12,
+                    "x": 13,
+                    "c": 14,
+                    "v": 15,
+                }
+
+                window.addEventListener("keydown", (event) => {
+                    const keypadIndex = keyToKeypadIndex[event.key];
+                    if (keypadIndex !== undefined) {
+                        console.log("setting keypad state to true for", keypadIndex)
+                        goWasmModule.instance.exports.setKeypadState(keypadIndex, true);
+                    }
+                })
+
+                window.addEventListener("keyup", (event) => {
+                    const keypadIndex = keyToKeypadIndex[event.key];
+                    if (keypadIndex !== undefined) {
+                        console.log("setting keypad state to false for", keypadIndex)
+                        goWasmModule.instance.exports.setKeypadState(keypadIndex, false);
+                    }
+                })
+
                 document.getElementById("stop-rom").addEventListener("click", () => {
                     stopAnimationLoop();
                 })
@@ -46,6 +81,10 @@
 
             function onRomLoaded() {
                 startAnimationLoop();
+            }
+
+            function onUnhandledInstruction() {
+                stopAnimationLoop();
             }
         </script>
     </head>
