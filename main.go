@@ -459,6 +459,20 @@ func drawSprite(xReg uint16, yReg uint16, height uint16) {
 		V[0xF] = 0
 	}
 
+	copyOutputBufferToCanvas()
+}
+
+func clearScreen() {
+	for y := 0; y < displayHeight; y++ {
+		for x := displayWidth - 1; x >= 0; x-- {
+			outputBuffer[y][x] = false
+		}
+	}
+
+	copyOutputBufferToCanvas()
+}
+
+func copyOutputBufferToCanvas() {
 	goImageData := make([]byte, displayWidth*displayHeight*4)
 	i := 0
 	for screenY := 0; screenY < displayHeight; screenY++ {
@@ -545,16 +559,6 @@ func setUpRomLoader() {
 
 		return nil
 	}))
-}
-
-func clearScreen() {
-	document := js.Global().Get("document")
-	canvas := document.Call("getElementById", "canvas")
-	ctx := canvas.Call("getContext", "2d")
-	width := canvas.Get("width").Int()
-	height := canvas.Get("height").Int()
-	ctx.Set("fillStyle", "#222")
-	ctx.Call("fillRect", 0, 0, width, height)
 }
 
 func loadFont() {
