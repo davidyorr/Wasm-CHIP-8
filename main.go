@@ -325,7 +325,6 @@ func executeInstruction() {
 		{
 			// DXYN : draw
 			// draw N pixels tall sprite from memory location I, at X Y coord from register
-			// the starting position of the drawing should wrap, but not the actual drawing itself
 			x := (instruction & 0x0F00) >> 8
 			y := (instruction & 0x00F0) >> 4
 			n := (instruction & 0x000F) >> 0
@@ -460,6 +459,7 @@ func executeInstruction() {
 }
 
 func drawSprite(xReg uint16, yReg uint16, height uint16) {
+	// the starting position of the drawing should wrap, but not the actual drawing itself
 	startingX := V[xReg] & 63
 	x := startingX
 	y := V[yReg] & 63
@@ -467,6 +467,9 @@ func drawSprite(xReg uint16, yReg uint16, height uint16) {
 	pixelWasTurnedOff := false
 	for line := I; line < I+height; line++ {
 		for i := 7; i >= 0; i-- {
+			if x >= displayWidth || y >= displayHeight {
+				continue
+			}
 			bitValue := (memory[line] >> i) & 1
 			if bitValue != 0 {
 				if frameBuffer[y][x] {
