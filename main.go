@@ -416,6 +416,24 @@ func executeInstruction() {
 					x := (instruction & 0x0F00) >> 8
 					I = uint16((V[x] & 0x000F) >> 4)
 				}
+			case 0x55:
+				{
+					// FX55 : store memory
+					// copy the values of V0 through VX into memory, starting at address I
+					x := (instruction & 0x0F00) >> 8
+					for j := range x + 1 {
+						memory[I+j] = V[j]
+					}
+				}
+			case 0x65:
+				{
+					// FX65 : load memory
+					// read values from memory starting at address I into V0 through VX
+					x := (instruction & 0x0F00) >> 8
+					for j := range x + 1 {
+						V[j] = memory[I+j]
+					}
+				}
 			default:
 				{
 					stopForUnhandledInstruction(instruction)
