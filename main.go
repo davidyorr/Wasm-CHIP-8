@@ -40,7 +40,7 @@ var I uint16
 var stack []uint16
 
 // true for "on", false for "off"
-var outputBuffer [displayHeight][displayWidth]bool
+var frameBuffer [displayHeight][displayWidth]bool
 
 // execution loop variables
 var timeAccumulator float64
@@ -460,11 +460,11 @@ func drawSprite(xReg uint16, yReg uint16, height uint16) {
 		for i := 7; i >= 0; i-- {
 			bitValue := (memory[line] >> i) & 1
 			if bitValue != 0 {
-				if outputBuffer[y][x] {
+				if frameBuffer[y][x] {
 					pixelWasTurnedOff = true
 				}
 				// flip the pixel
-				outputBuffer[y][x] = !outputBuffer[y][x]
+				frameBuffer[y][x] = !frameBuffer[y][x]
 			}
 			x++
 		}
@@ -477,25 +477,25 @@ func drawSprite(xReg uint16, yReg uint16, height uint16) {
 		V[0xF] = 0
 	}
 
-	copyOutputBufferToCanvas()
+	presentFrame()
 }
 
 func clearScreen() {
 	for y := 0; y < displayHeight; y++ {
 		for x := displayWidth - 1; x >= 0; x-- {
-			outputBuffer[y][x] = false
+			frameBuffer[y][x] = false
 		}
 	}
 
-	copyOutputBufferToCanvas()
+	presentFrame()
 }
 
-func copyOutputBufferToCanvas() {
+func presentFrame() {
 	goImageData := make([]byte, displayWidth*displayHeight*4)
 	i := 0
 	for screenY := 0; screenY < displayHeight; screenY++ {
 		for screenX := 0; screenX < displayWidth; screenX++ {
-			if outputBuffer[screenY][screenX] {
+			if frameBuffer[screenY][screenX] {
 				// write "on" pixel
 				goImageData[i] = 238
 				goImageData[i+1] = 238
