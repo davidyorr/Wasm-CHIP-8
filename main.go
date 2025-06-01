@@ -416,6 +416,15 @@ func executeInstruction() {
 					x := (instruction & 0x0F00) >> 8
 					I = uint16((V[x] & 0x000F) >> 4)
 				}
+			case 0x33:
+				{
+					// FX33 : binary-coded decimal conversion
+					// store the BCD representation of the number in VX into memory, starting at address I
+					x := (instruction & 0x0F00) >> 8
+					memory[I] = V[x] / 100
+					memory[I+1] = (V[x] % 100) / 10
+					memory[I+2] = (V[x] % 100) % 10
+				}
 			case 0x55:
 				{
 					// FX55 : store memory
