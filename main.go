@@ -50,6 +50,7 @@ var lastFrameTime time.Time
 var keypadStates [16]bool
 
 // for debugging
+var debugMode bool = false
 var romLength int
 var romIsRunning bool = false
 
@@ -73,6 +74,9 @@ func processEmulatorStep() {
 		// 60Hz is timers target, so execute 11 instructions per tick
 		for range 11 {
 			executeInstruction()
+			if debugMode {
+				drawDebugInformation()
+			}
 		}
 		// decrement timers once per 60Hz
 		if delayTimer > 0 {
@@ -581,11 +585,117 @@ func loadFont() {
 	}
 }
 
-//go:wasmexport debugRom
-func debugRom() {
-	fmt.Printf("debugging ROM of length [%d]\n", romLength)
+//go:wasmexport debug
+func debug() {
+	fmt.Println("toggling debug mode...")
+	debugMode = !debugMode
+}
+
+var keypadIndexToKey = map[int]string{
+	0:  "1",
+	1:  "2",
+	2:  "3",
+	3:  "4",
+	4:  "q",
+	5:  "w",
+	6:  "e",
+	7:  "r",
+	8:  "a",
+	9:  "s",
+	10: "d",
+	11: "f",
+	12: "z",
+	13: "x",
+	14: "c",
+	15: "v",
+}
+
+func drawDebugInformation() {
 	document := js.Global().Get("document")
-	debugModal := document.Call("getElementById", "debug-modal")
+	canvas := document.Call("getElementById", "debug-canvas")
+	ctx := canvas.Call("getContext", "2d")
+	width := canvas.Get("width").Int()
+	height := canvas.Get("height").Int()
+	ctx.Set("fillStyle", "#222")
+	ctx.Call("fillRect", 0, 0, width, height)
+
+	leftColumnX := 212.0
+	rightColumnX := 252.0
+	startingY := 0.0
+	lineHeight := 34.0
+	line := 1.0
+	ctx.Set("font", "28px monospace")
+
+	var writeHeader = func(text any) {
+		ctx.Set("textAlign", "right")
+		ctx.Call("fillText", text, leftColumnX, startingY+(line*lineHeight))
+	}
+	var writeLine = func(text any) {
+		ctx.Set("textAlign", "left")
+		ctx.Call("fillText", text, rightColumnX, startingY+(line*lineHeight))
+	}
+
+	// PC
+	ctx.Set("fillStyle", "#FF3030")
+	writeHeader("PC")
+	writeLine(PC)
+	line += 1.5
+
+	// I
+	ctx.Set("fillStyle", "#559A70")
+	writeHeader("I")
+	writeLine(I)
+	line += 1.5
+
+	// V
+	ctx.Set("fillStyle", "#CCAC00")
+	writeHeader("V")
+	var registerLine string = ""
+	for i, value := range V {
+		registerLine += fmt.Sprintf("V%X=0x%03X ", i, value)
+		if (i+1)%2 == 0 {
+			writeLine(registerLine)
+			line++
+			registerLine = ""
+		}
+	}
+	line += 0.5
+
+	// keypad states
+	ctx.Set("fillStyle", "#0099CC")
+	writeHeader("keypad")
+	var keypadStateLine string = ""
+	for i, pressed := range keypadStates {
+		state := 0
+		if pressed {
+			state = 1
+		}
+		keypadStateLine += fmt.Sprintf("% s=%d ", keypadIndexToKey[i], state)
+		if (i+1)%4 == 0 {
+			writeLine(keypadStateLine)
+			line++
+			keypadStateLine = ""
+		}
+	}
+	line += 0.5
+
+	// delay timer
+	ctx.Set("fillStyle", "#CC69C8")
+	writeHeader("delay timer")
+	writeLine(delayTimer)
+	line += 1.5
+
+	// sound timer
+	ctx.Set("fillStyle", "#7AC4CC")
+	writeHeader("sound timer")
+	writeLine(soundTimer)
+}
+
+//go:wasmexport viewRom
+func viewRom() {
+	fmt.Printf("viewing ROM of length [%d]\n", romLength)
+	document := js.Global().Get("document")
+	debugModal := document.Call("getElementById", "rom-viewer-modal")
 	debugModalStyle := debugModal.Get("style")
 	debugModalStyle.Set("visibility", "visible")
 

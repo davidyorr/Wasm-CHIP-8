@@ -10,14 +10,23 @@
                 go.run(wasmModule.instance);
                 goWasmModule = wasmModule;
 
-                document.getElementById("debug-rom").addEventListener("click", () => {
-                    const debugModal = document.getElementById("debug-modal");
+                document.getElementById("view-rom").addEventListener("click", () => {
+                    const debugModal = document.getElementById("rom-viewer-modal");
                     if (debugModal.style.visibility === "visible") {
                         debugModal.style.visibility = "hidden";
                         debugModal.getElementsByTagName("table")?.[0].remove();
                         return;
                     }
-                    wasmModule.instance.exports.debugRom();
+                    wasmModule.instance.exports.viewRom();
+                })
+                document.getElementById("debug").addEventListener("click", () => {
+                    const debugCanvas = document.getElementById("debug-canvas");
+                    if (debugCanvas.style.display === "inline") {
+                        debugCanvas.style.display = "none";
+                        return;
+                    }
+                    debugCanvas.style.display = "inline";
+                    wasmModule.instance.exports.debug();
                 })
 
                 const keyToKeypadIndex = {
@@ -42,7 +51,6 @@
                 window.addEventListener("keydown", (event) => {
                     const keypadIndex = keyToKeypadIndex[event.key];
                     if (keypadIndex !== undefined) {
-                        console.log("setting keypad state to true for", keypadIndex)
                         goWasmModule.instance.exports.setKeypadState(keypadIndex, true);
                     }
                 })
@@ -50,7 +58,6 @@
                 window.addEventListener("keyup", (event) => {
                     const keypadIndex = keyToKeypadIndex[event.key];
                     if (keypadIndex !== undefined) {
-                        console.log("setting keypad state to false for", keypadIndex)
                         goWasmModule.instance.exports.setKeypadState(keypadIndex, false);
                     }
                 })
@@ -60,6 +67,14 @@
                 })
 
                 document.getElementById("canvas").getContext("2d").imageSmoothingEnabled = false;
+
+                const debugCanvas = document.getElementById("debug-canvas")
+                const debugCanvasCtx = debugCanvas.getContext("2d");
+                debugCanvasCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                debugCanvas.style.width = "320px";
+                debugCanvas.style.height = "320px";
+                debugCanvas.width = 320 * window.devicePixelRatio;
+                debugCanvas.height = 320 * window.devicePixelRatio;
             });
 
             let animationFrameId = null;
@@ -89,16 +104,18 @@
         </script>
     </head>
     <body>
-        <canvas id="canvas" width="640" height="320"></canvas>
-        <div class="rom-container">
+        <div class="content">
+            <canvas id="canvas" width="640" height="320"></canvas>
+            <canvas id="debug-canvas" width="320" height="320"></canvas>
         </div>
         <div id="controls">
             <label for="rom-input">Load ROM:</label>
             <input id="rom-input" type="file" name="rom-input" accept=".ch8" />
-            <button id="debug-rom">Debug ROM</button>
+            <button id="debug">Debug</button>
+            <button id="view-rom">View ROM Bytes</button>
             <button id="stop-rom">Stop ROM</button>
         </div>
-        <div id="debug-modal"></div>
+        <div id="rom-viewer-modal"></div>
     </body>
     <style>
         html {
@@ -118,13 +135,16 @@
             place-items: center;
             background-color: #222;
         }
-        #canvas {
-            border: 8px solid cornflowerblue;
-        }
-        .rom-container {
+        .content {
             display: flex;
-            flex-direction: column;
-            color: #EEE;
+            gap: 24px;
+        }
+        #canvas {
+            box-shadow: 0px 0px 0px 8px cornflowerblue;
+        }
+        #debug-canvas {
+            box-shadow: 0px 0px 0px 8px olive;
+            display: none;
         }
         #controls {
             position: fixed;
@@ -137,7 +157,7 @@
             height: var(--controls-height);
             color: white;
         }
-        #debug-modal {
+        #rom-viewer-modal {
             position: absolute;
             height: calc(100% - var(--controls-height));
             width: 100%;
