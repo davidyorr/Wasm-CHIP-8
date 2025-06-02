@@ -152,9 +152,9 @@ func executeInstruction() {
 		{
 			// 3XNN : skip conditional
 			// skip the next instruction if VX equals NN
-			vx := V[(instruction&0x0F00)>>8]
+			x := (instruction & 0x0F00) >> 8
 			nn := uint8(instruction & 0x00FF)
-			if vx == nn {
+			if V[x] == nn {
 				PC += 2
 			}
 		}
@@ -162,9 +162,9 @@ func executeInstruction() {
 		{
 			// 4XNN : skip conditional
 			// skip the next instruction if VX does equals NN
-			vx := V[(instruction&0x0F00)>>8]
+			x := (instruction & 0x0F00) >> 8
 			nn := uint8(instruction & 0x00FF)
-			if vx != nn {
+			if V[x] != nn {
 				PC += 2
 			}
 		}
@@ -172,9 +172,9 @@ func executeInstruction() {
 		{
 			// 5XY0 : skip conditional
 			// skip the next instruction if VX equals VY
-			vx := V[(instruction&0x0F00)>>8]
-			vy := V[(instruction&0x00F0)>>4]
-			if vx == vy {
+			x := (instruction & 0x0F00) >> 8
+			y := (instruction & 0x00F0) >> 4
+			if V[x] == V[y] {
 				PC += 2
 			}
 		}
