@@ -43,6 +43,9 @@ var stack []uint16
 // true for "on", false for "off"
 var frameBuffer [displayHeight][displayWidth]bool
 
+// to keep track of whether to redraw the canvas - no need to update if this is false
+var frameBufferModified = false
+
 // execution loop variables
 var timeAccumulator float64
 var lastFrameTime time.Time
@@ -84,6 +87,7 @@ func processEmulatorStep() {
 				drawDebugInformation()
 			}
 		}
+		presentFrame()
 		// decrement timers at a rate of 60Hz (60 per second)
 		if delayTimer > 0 {
 			delayTimer--
@@ -503,7 +507,7 @@ func drawSprite(xReg uint16, yReg uint16, height uint16) {
 		V[0xF] = 0
 	}
 
-	presentFrame()
+	frameBufferModified = true
 }
 
 func clearScreen() {
@@ -513,10 +517,14 @@ func clearScreen() {
 		}
 	}
 
-	presentFrame()
+	frameBufferModified = true
 }
 
 func presentFrame() {
+	if !frameBufferModified {
+		return
+	}
+
 	goImageData := make([]byte, displayWidth*displayHeight*4)
 	i := 0
 	for screenY := 0; screenY < displayHeight; screenY++ {
@@ -554,6 +562,8 @@ func presentFrame() {
 	canvas := document.Call("getElementById", "canvas")
 	ctx := canvas.Call("getContext", "2d")
 	ctx.Call("drawImage", jsOffscreenCanvas, 0, 0, displayWidth*drawScale, displayHeight*drawScale)
+
+	frameBufferModified = false
 }
 
 //go:wasmexport setKeypadState
