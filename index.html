@@ -144,12 +144,6 @@
             }
 
             document.addEventListener('DOMContentLoaded', function () {
-                document.body.addEventListener('click', () => {
-                    if (audioContext?.state === 'suspended') {
-                        audioContext.resume();
-                    }
-                }, { once: true });
-
                 document.getElementById("volume").addEventListener("change", (event) => {
                     volume = event.target.value;
                 })
