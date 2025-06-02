@@ -77,6 +77,9 @@
                 debugCanvas.height = 320 * window.devicePixelRatio;
             });
 
+            // game loop
+            // -----------------------------------
+
             let animationFrameId = null;
 
             function handleAnimationFrame() {
@@ -101,6 +104,56 @@
             function onUnhandledInstruction() {
                 stopAnimationLoop();
             }
+
+            // audio
+            // -----------------------------------
+
+            let audioContext;
+            let oscillator;
+            let gainNode;
+            let volume = 5;
+
+            function initAudioContext() {
+                audioContext = new window.AudioContext();
+                if (!audioContext) {
+                    return false;
+                }
+                return true;
+            }
+
+            function startTone() {
+                if (!initAudioContext()) {
+                    return;
+                }
+                gainNode = audioContext.createGain();
+                gainNode.connect(audioContext?.destination);
+                gainNode.gain.setValueAtTime(volume / 10, audioContext.currentTime);
+                oscillator = audioContext.createOscillator();
+                oscillator.type = "square";
+                oscillator.frequency.setValueAtTime(293.66, audioContext.currentTime); // D4
+                oscillator.connect(gainNode);
+                oscillator.start();
+            }
+
+            function stopTone() {
+                if (oscillator) {
+                    oscillator.stop();
+                    oscillator.disconnect();
+                    oscillator = null;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                document.body.addEventListener('click', () => {
+                    if (audioContext?.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                }, { once: true });
+
+                document.getElementById("volume").addEventListener("change", (event) => {
+                    volume = event.target.value;
+                })
+            })
         </script>
     </head>
     <body>
@@ -114,6 +167,8 @@
             <button id="debug">Debug</button>
             <button id="view-rom">View ROM Bytes</button>
             <button id="stop-rom">Stop ROM</button>
+            <input type="range" id="volume" name="volume" min="0" max="10" value="5" />
+            <label for="volume">Volume</label>
         </div>
         <div id="rom-viewer-modal"></div>
     </body>

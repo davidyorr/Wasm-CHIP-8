@@ -32,6 +32,7 @@ var V [16]uint8
 // timers
 var delayTimer uint8
 var soundTimer uint8
+var toneIsPlaying bool = false
 
 // index register, used to store memory addresses
 var I uint16
@@ -55,11 +56,8 @@ var romLength int
 var romIsRunning bool = false
 
 func main() {
-	fmt.Println("Hello Wasm")
-
 	setUpRomLoader()
 
-	fmt.Println("setup complete, blocking main goroutine")
 	<-make(chan struct{})
 }
 
@@ -78,12 +76,21 @@ func processEmulatorStep() {
 				drawDebugInformation()
 			}
 		}
-		// decrement timers once per 60Hz
+		// decrement timers at a rate of 60Hz (60 per second)
 		if delayTimer > 0 {
 			delayTimer--
 		}
 		if soundTimer > 0 {
+			if !toneIsPlaying {
+				toneIsPlaying = true
+				js.Global().Get("startTone").Invoke()
+			}
 			soundTimer--
+		} else {
+			if toneIsPlaying {
+				js.Global().Get("stopTone").Invoke()
+			}
+			toneIsPlaying = false
 		}
 		timeAccumulator -= thresholdMicroseconds
 	}
@@ -97,7 +104,6 @@ func executeInstruction() {
 
 	// instructions are 2 bytes
 	instruction := (uint16(memory[PC]) << 8) | uint16(memory[PC+1])
-	// fmt.Printf("PC=[%d], handling instruction [%04X] [%16b]\n", PC, instruction, instruction)
 
 	// look at the first nibble
 	switch (instruction & 0xF000) >> 12 {
