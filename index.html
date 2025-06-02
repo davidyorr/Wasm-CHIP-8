@@ -29,6 +29,18 @@
                     wasmModule.instance.exports.debug();
                 })
 
+                const instructionsPerTickInput = document.getElementById("instructions-per-tick")
+                instructionsPerTickInput.addEventListener("change", (event) => {
+                    const value = event.target.value;
+                    if (value < 1) {
+                        instructionsPerTickInput.value = 1;
+                    }
+                    if (value > 10000) {
+                        instructionsPerTickInput.value = 10000;
+                    }
+                    wasmModule.instance.exports.setInstructionsPerTick(instructionsPerTickInput.value);
+                })
+
                 const keyToKeypadIndex = {
                     "1": 0,
                     "2": 1,
@@ -156,13 +168,21 @@
             <canvas id="debug-canvas" width="320" height="320"></canvas>
         </div>
         <div id="controls">
-            <label for="rom-input">Load ROM:</label>
-            <input id="rom-input" type="file" name="rom-input" accept=".ch8" />
+            <div>
+                <label for="rom-input">Load ROM:</label>
+                <input id="rom-input" type="file" name="rom-input" accept=".ch8" />
+            </div>
             <button id="debug">Debug</button>
             <button id="view-rom">View ROM Bytes</button>
             <button id="stop-rom">Stop ROM</button>
-            <input type="range" id="volume" name="volume" min="0" max="10" value="5" />
-            <label for="volume">Volume</label>
+            <div>
+                <input type="range" id="volume" name="volume" min="0" max="10" value="5" />
+                <label for="volume">Volume</label>
+            </div>
+            <div>
+                <input type="number" id="instructions-per-tick" name="instructions-per-tick" />
+                <label for="instructions-per-tick">Instructions Per Tick</label>
+            </div>
         </div>
         <div id="rom-viewer-modal"></div>
     </body>
@@ -195,16 +215,23 @@
             box-shadow: 0px 0px 0px 8px olive;
             display: none;
         }
+        #controls, #controls div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         #controls {
             position: fixed;
             bottom: 0;
             width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 8px;
+            gap: 12px;
             height: var(--controls-height);
             color: white;
+
+            #instructions-per-tick {
+                max-width: 100px;
+            }
         }
         #rom-viewer-modal {
             position: absolute;

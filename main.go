@@ -50,6 +50,9 @@ var lastFrameTime time.Time
 // to keep track of which keys are currently pressed, true for pressed
 var keypadStates [16]bool
 
+// number of instructions to execute per tick
+var instructionsPerTick uint32 = 11
+
 // for debugging
 var debugMode bool = false
 var romLength int
@@ -57,6 +60,11 @@ var romIsRunning bool = false
 
 func main() {
 	setUpRomLoader()
+
+	// set the default instructions per tick in the input element
+	document := js.Global().Get("document")
+	jsInstructionsPerTickInput := document.Call("getElementById", "instructions-per-tick")
+	jsInstructionsPerTickInput.Set("value", instructionsPerTick)
 
 	<-make(chan struct{})
 }
@@ -68,9 +76,9 @@ func processEmulatorStep() {
 	timeAccumulator += float64(delta.Microseconds())
 
 	for timeAccumulator >= thresholdMicroseconds {
-		// target 660 IPS
-		// 60Hz is timers target, so execute 11 instructions per tick
-		for range 11 {
+		// to find the instructions per second, multiply the instructionsPerTick by 60 (from 60Hz timers target)
+		// the default of 11 results in 660 IPS
+		for range instructionsPerTick {
 			executeInstruction()
 			if debugMode {
 				drawDebugInformation()
@@ -557,6 +565,11 @@ func setKeypadState(key uint32, state bool) {
 	keypadStates[key] = state
 }
 
+//go:wasmexport setInstructionsPerTick
+func setInstructionsPerTick(value uint32) {
+	instructionsPerTick = value
+}
+
 func stopForUnhandledInstruction(instruction uint16) {
 	fmt.Printf("unhandled instruction: [%04X]\n", instruction)
 	js.Global().Get("onUnhandledInstruction").Invoke()
@@ -565,9 +578,9 @@ func stopForUnhandledInstruction(instruction uint16) {
 
 func setUpRomLoader() {
 	document := js.Global().Get("document")
-	fileInput := document.Call("getElementById", "rom-input")
-	fileInput.Set("oninput", js.FuncOf(func(this js.Value, args []js.Value) any {
-		fileInput.Get("files").Call("item", 0).Call("arrayBuffer").Call("then", js.FuncOf(func(this js.Value, args []js.Value) any {
+	jsFileInput := document.Call("getElementById", "rom-input")
+	jsFileInput.Set("oninput", js.FuncOf(func(this js.Value, args []js.Value) any {
+		jsFileInput.Get("files").Call("item", 0).Call("arrayBuffer").Call("then", js.FuncOf(func(this js.Value, args []js.Value) any {
 			jsRomData := js.Global().Get("Uint8Array").New(args[0])
 			goDstSlice := make([]byte, jsRomData.Get("length").Int())
 			js.CopyBytesToGo(goDstSlice, jsRomData)
