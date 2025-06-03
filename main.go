@@ -62,7 +62,7 @@ var romLength int
 var romIsRunning bool = false
 
 func main() {
-	setUpRomLoader()
+	js.Global().Set("loadRom", js.FuncOf(loadRom))
 
 	// set the default instructions per tick in the input element
 	document := js.Global().Get("document")
@@ -586,38 +586,30 @@ func stopForUnhandledInstruction(instruction uint16) {
 	romIsRunning = false
 }
 
-func setUpRomLoader() {
-	document := js.Global().Get("document")
-	jsFileInput := document.Call("getElementById", "rom-input")
-	jsFileInput.Set("oninput", js.FuncOf(func(this js.Value, args []js.Value) any {
-		jsFileInput.Get("files").Call("item", 0).Call("arrayBuffer").Call("then", js.FuncOf(func(this js.Value, args []js.Value) any {
-			jsRomData := js.Global().Get("Uint8Array").New(args[0])
-			goDstSlice := make([]byte, jsRomData.Get("length").Int())
-			js.CopyBytesToGo(goDstSlice, jsRomData)
-			fmt.Println("data", jsRomData)
+func loadRom(this js.Value, args []js.Value) interface{} {
+	jsRomData := args[0]
+	goDstSlice := make([]byte, jsRomData.Get("length").Int())
+	js.CopyBytesToGo(goDstSlice, jsRomData)
 
-			// clear any memory from previous ROM
-			clear(memory[programOffset:])
+	// clear any memory from previous ROM
+	clear(memory[programOffset:])
 
-			// copy the ROM data into the memory variable
-			romLength = copy(memory[programOffset:], goDstSlice)
+	// copy the ROM data into the memory variable
+	romLength = copy(memory[programOffset:], goDstSlice)
 
-			fmt.Printf("Loaded %d bytes of ROM into memory array\n", romLength)
+	fmt.Printf("Loaded %d bytes of ROM into memory\n", romLength)
 
-			// reset variables
-			PC = programOffset
-			timeAccumulator = 0.0
-			lastFrameTime = time.Now()
-			romIsRunning = true
-			loadFont()
+	// reset variables
+	PC = programOffset
+	timeAccumulator = 0.0
+	lastFrameTime = time.Now()
+	romIsRunning = true
+	clearScreen()
+	loadFont()
 
-			js.Global().Get("onRomLoaded").Invoke()
+	js.Global().Get("onRomLoaded").Invoke()
 
-			return nil
-		}))
-
-		return nil
-	}))
+	return nil
 }
 
 func loadFont() {

@@ -41,6 +41,29 @@
                     wasmModule.instance.exports.setInstructionsPerTick(instructionsPerTickInput.value);
                 })
 
+                const romFilenameMap = {
+                    "Breakout": "Breakout (Brix hack) [David Winter, 1997].ch8",
+                    "Space Invadors": "Space Invaders [David Winter].ch8",
+                    "Wall": "Wall [David Winter].ch8",
+                }
+                document.getElementById("rom-select").addEventListener("change", async (event) => {
+                    document.activeElement.blur();
+                    if (!event.target.value) {
+                        return;
+                    }
+
+                    try {
+                        const romPath = `roms/${encodeURIComponent(romFilenameMap[event.target.value])}`;
+                        const response = await fetch(romPath);
+                        const arrayBuffer = await response.arrayBuffer();
+                        const romData = new Uint8Array(arrayBuffer);
+                        loadRom(romData);
+                    } catch (error) {
+                        console.error(`Error fetching rom for ${romPath}`);
+                        throw error;
+                    }
+                })
+
                 const keyToKeypadIndex = {
                     "1": 0,
                     "2": 1,
@@ -169,8 +192,12 @@
         </div>
         <div id="controls">
             <div>
-                <label for="rom-input">Load ROM:</label>
-                <input id="rom-input" type="file" name="rom-input" accept=".ch8" />
+                <select id="rom-select" name="rom-select" name="roms">
+                    <option value="">-- Select a ROM --</option>
+                    <option value="Breakout">Breakout</option>
+                    <option value="Space Invadors">Space Invadors</option>
+                    <option value="Wall">Wall</option>
+                </select>
             </div>
             <button id="debug">Debug</button>
             <button id="view-rom">View ROM Bytes</button>

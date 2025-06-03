@@ -16,6 +16,7 @@ build-pages: build
 	@cp index.html $(GH_PAGES_DIR)/
 	@cp wasm_exec.js $(GH_PAGES_DIR)/
 	@cp main.wasm $(GH_PAGES_DIR)/
+	@cp -r roms $(GH_PAGES_DIR)/roms
 
 clean:
 	@echo "Cleaning application"
