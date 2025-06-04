@@ -173,7 +173,7 @@ func executeInstruction() {
 	case 0x4:
 		{
 			// 4XNN : skip conditional
-			// skip the next instruction if VX does equals NN
+			// skip the next instruction if VX does not equal NN
 			x := (instruction & 0x0F00) >> 8
 			nn := uint8(instruction & 0x00FF)
 			if V[x] != nn {
